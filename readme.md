@@ -3,9 +3,10 @@
 Tento projekt vznikl pro předmět WA na PEF MENDELU. Tento průvodce ukáže základní použití mikroframeworku Slim pro
 vytvoření aplikace, která zhruba odpovídá části zadání z předmětu APV (tedy evidence osob a jejich adres).
 
-Proti plnotučným frameworkům se Slim jeví jako nedotažený projekt, ale je to záměr. Tento framework řeší v podstatě
-jen tzv. routing a předání dat do skriptu. Jeho hlavní výhoda je snadné použití a možnost namíchat si vlastní
-oblíbené knihovny. Nejlépe jej použijete jako backend pro REST rozhraní.
+Proti plnotučným frameworkům se Slim na první pohled jeví jako nedotažený projekt, ale to je záměr. Tento framework
+řeší v podstatě jen tzv. routing, předání dat do skriptu a řádnou odpověď. Jeho hlavní výhoda je snadné použití
+a možnost namíchat si vlastní oblíbené knihovny. Nejlépe jej použijete jako backend pro REST rozhraní, kde ani není
+potřeba řešit šablony a generování formulářů.
 
 ## Úvod
 
@@ -162,6 +163,15 @@ HTTP metodu pomocí `$app->any('/route', function(...) {...});
 V šabloně je samozřejmě přístupná proměnná `$persons`, která je naplněna daty z DB (pokud žádná nemáte, zkuste vložit
 nějaké řádky do tabulky `persons`. Komunikace s databází by samozřejmě měla být v `try {} catch() {}` bloku.
 
+Všimněte si, že každá obsluha routy získává objekt popisující [vstup](https://www.slimframework.com/docs/objects/request.html)
+a [výstup](https://www.slimframework.com/docs/objects/response.html) a argumenty (proměnné z URL). Aby nám mohlo IDE
+pomáhat, je dobré přidat k argumentům funkce i typ, který mají mít: `Psr\Http\Message\ServerRequestInterface` a
+`Psr\Http\Message\ResponseInterface`, nejlépe pomocí `use`:
+
+	use Psr\Http\Message\ServerRequestInterface;
+	use Psr\Http\Message\ResponseInterface;
+	$app->get('/', function (ServerRequestInterface $request, ResponseInterface $response, $args) {...});
+
 [Zdrojové kódy](https://github.com/lysek/wa_slim_walkthrough/commit/1811121632546d322fb81068f04ac096c7f6131f)
 
 ### Přidání osoby
@@ -295,8 +305,9 @@ této značky budou všechny relativní adresy (začínající jinak než `http:
 `<base>` značky. Takže pokud máte aplikaci nahranou např. ve složce `slim_demo`, měla by vaše `<base>` značka vypadat
 takto: `<base href="/slim_demo/public/">`.
 
-Vhodné místo k detekci aktuální cesty k aplikaci je *middleware*, který se spouští vždy před/po vlastní obsluze
-routy. Je také nutné přidat do našeho adaptéru pro Latte možnost vložit proměnnou do každé renderované šablony.
+Vhodné místo k detekci aktuální cesty k aplikaci je [*middleware*](https://www.slimframework.com/docs/concepts/middleware.html),
+který se spouští vždy před/po vlastní obsluze routy. Je také nutné přidat do našeho adaptéru pro Latte možnost vložit
+proměnnou do každé renderované šablony. *Middleware* je i vhodné místo pro ověření, zda je uživatel přihlášen nebo ne.
 
 	$app->add(function (Request $request, Response $response, callable $next) use($settings) {
 		$currentPath = dirname($_SERVER['PHP_SELF']);
@@ -315,7 +326,7 @@ přidat třídu `form-control` na vstupní pole formulářů a zabalit celou str
 [Zdrojové kódy](https://github.com/lysek/wa_slim_walkthrough/commit/86d6be9d344e2d7338f3ed1d0bfc71cbf140fbfa)
 
 ## Poznámky
-Je vidět, že aplikace se poměrně rychle rozrůstá, proto by nebylo špatné rozdělit routy do více souborů.
+Je vidět, že aplikace se poměrně rychle rozrůstá, proto by nebylo špatné, rozdělit routy do více souborů.
 
 ### Rozjetí projektu na jiném stroji (po stažení z Gitu)
 Příkazem `git clone http://adresa.repositare.cz/nazev.git slozka` se vám stáhne z Gitu kopie projektu. Jelikož jsou
