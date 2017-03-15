@@ -5,10 +5,12 @@ Vypis osob
 {/block}
 
 {block content}
-<table>
+{if !empty($persons)}
+<table class="table table-striped">
 	<tr>
 		<th>Jméno</th>
 		<th>Adresa</th>
+		<th>Editace</th>
 		<th>Smazat</th>
 	</tr>
 {foreach $persons as $p}
@@ -22,14 +24,17 @@ Vypis osob
 			{/if}
 		</td>
 		<td>
-			<a href="editace/{$p['id']}">Editace</a>
+			<a class="btn btn-primary" href="editace/{$p['id']}">Editace</a>
 		</td>
 		<td>
 			<form action="smazat/{$p['id']}" onsubmit="return confirm('Opravdu smazat osobu?')" method="post">
-				<input type="submit" value="Smazat" />
+				<input class="btn btn-danger" type="submit" value="Smazat" />
 			</form>
 		</td>
 	</tr>
 {/foreach}
 </table>
+{else}
+	<p>Nejsou zde zadne osoby.</p>
+{/if}
 {/block}

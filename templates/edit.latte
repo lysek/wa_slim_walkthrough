@@ -14,19 +14,19 @@ Editace osoby
 
 <form action="aktualizace/{$form['id']}" method="post">
 	<label>Jmeno</label>
-	<input type="text" name="first_name" value="{$form['first_name']}" required />
+	<input class="form-control" type="text" name="first_name" value="{$form['first_name']}" required />
 	<br />
 
 	<label>Prijmeni</label>
-	<input type="text" name="last_name" value="{$form['last_name']}" required />
+	<input class="form-control" type="text" name="last_name" value="{$form['last_name']}" required />
 	<br />
 
 	<label>Prezdivka</label>
-	<input type="text" name="nickname" value="{$form['nickname']}" required />
+	<input class="form-control" type="text" name="nickname" value="{$form['nickname']}" required />
 	<br />
 
 	<label>Adresa</label>
-	<select name="id_location">
+	<select class="form-control" name="id_location">
 		<option value="">Neznama adresa</option>
 		{foreach $locations as $loc}
 		<option value="{$loc['id']}"{if $loc['id'] == $form['id_location']} selected{/if}>{$loc['city']}, {$loc['street_name']} {$loc['street_number']}</option>
@@ -34,7 +34,7 @@ Editace osoby
 	</select>
 	<br />
 
-	<input type="submit" value="Upravit" />
+	<input class="btn btn-success" type="submit" value="Upravit" />
 </form>
 
 {/block}
