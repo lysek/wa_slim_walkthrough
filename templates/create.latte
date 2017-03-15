@@ -1,0 +1,25 @@
+{extends 'layout.latte'}
+
+{block title}
+Vytvoreni osoby
+{/block}
+
+{block content}
+
+<form action="ulozit" method="post">
+	<label>Jmeno</label>
+	<input type="text" name="first_name" required />
+	<br />
+
+	<label>Prijmeni</label>
+	<input type="text" name="last_name" required />
+	<br />
+
+	<label>Prezdivka</label>
+	<input type="text" name="nickname" required />
+	<br />
+
+	<input type="submit" value="Pridat" />
+</form>
+
+{/block}
