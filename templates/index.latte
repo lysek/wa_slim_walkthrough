@@ -8,6 +8,7 @@ Vypis osob
 <table>
 	<tr>
 		<th>Jméno</th>
+		<th>Adresa</th>
 		<th>Smazat</th>
 	</tr>
 {foreach $persons as $p}
@@ -16,7 +17,12 @@ Vypis osob
 			{$p['first_name']} {$p['last_name']}
 		</td>
 		<td>
-			<form action="/osoby/smazat" onsubmit="return confirm('Opravdu smazat osobu?')" method="post">
+			{if $p['id_location']}
+			{$p['city']}, {$p['street_name']} {$p['street_number']}
+			{/if}
+		</td>
+		<td>
+			<form action="smazat" onsubmit="return confirm('Opravdu smazat osobu?')" method="post">
 				<input type="hidden" name="id" value="{$p['id']}" />
 				<input type="submit" value="Smazat" />
 			</form>

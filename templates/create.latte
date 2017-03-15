@@ -6,24 +6,30 @@ Vytvoreni osoby
 
 {block content}
 
+{if !empty($hlaska)}
+	<p>
+		{$hlaska}
+	</p>
+{/if}
+
 <form action="ulozit" method="post">
 	<label>Jmeno</label>
-	<input type="text" name="first_name" required />
+	<input type="text" name="first_name" value="{$form['first_name']}" required />
 	<br />
 
 	<label>Prijmeni</label>
-	<input type="text" name="last_name" required />
+	<input type="text" name="last_name" value="{$form['last_name']}" required />
 	<br />
 
 	<label>Prezdivka</label>
-	<input type="text" name="nickname" required />
+	<input type="text" name="nickname" value="{$form['nickname']}" required />
 	<br />
 
 	<label>Adresa</label>
 	<select name="id_location">
 		<option value="">Neznama adresa</option>
 		{foreach $locations as $loc}
-		<option value="{$loc['id']}">{$loc['city']}, {$loc['street_name']} {$loc['street_number']}</option>
+		<option value="{$loc['id']}"{if $loc['id'] == $form['id_location']} selected{/if}>{$loc['city']}, {$loc['street_name']} {$loc['street_number']}</option>
 		{/foreach}
 	</select>
 	<br />
