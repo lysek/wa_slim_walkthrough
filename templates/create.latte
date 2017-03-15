@@ -19,6 +19,15 @@ Vytvoreni osoby
 	<input type="text" name="nickname" required />
 	<br />
 
+	<label>Adresa</label>
+	<select name="id_location">
+		<option value="">Neznama adresa</option>
+		{foreach $locations as $loc}
+		<option value="{$loc['id']}">{$loc['city']}, {$loc['street_name']} {$loc['street_number']}</option>
+		{/foreach}
+	</select>
+	<br />
+
 	<input type="submit" value="Pridat" />
 </form>
 
