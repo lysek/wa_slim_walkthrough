@@ -22,8 +22,10 @@ Vypis osob
 			{/if}
 		</td>
 		<td>
-			<form action="smazat" onsubmit="return confirm('Opravdu smazat osobu?')" method="post">
-				<input type="hidden" name="id" value="{$p['id']}" />
+			<a href="editace/{$p['id']}">Editace</a>
+		</td>
+		<td>
+			<form action="smazat/{$p['id']}" onsubmit="return confirm('Opravdu smazat osobu?')" method="post">
 				<input type="submit" value="Smazat" />
 			</form>
 		</td>
