@@ -1,0 +1,27 @@
+{extends layout.latte}
+
+{block title}
+Vypis osob
+{/block}
+
+{block content}
+<table>
+	<tr>
+		<th>Jméno</th>
+		<th>Smazat</th>
+	</tr>
+{foreach $persons as $p}
+	<tr>
+		<td>
+			{$p['first_name']} {$p['last_name']}
+		</td>
+		<td>
+			<form action="/osoby/smazat" onsubmit="return confirm('Opravdu smazat osobu?')" method="post">
+				<input type="hidden" name="id" value="{$p['id']}" />
+				<input type="submit" value="Smazat" />
+			</form>
+		</td>
+	</tr>
+{/foreach}
+</table>
+{/block}

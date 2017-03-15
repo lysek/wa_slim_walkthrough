@@ -1,10 +1,10 @@
 <?php
 // Routes
 
-$app->get('/[{name}]', function ($request, $response, $args) {
-    // Sample log message
-    $this->logger->info("Slim-Skeleton '/' route");
-
-    // Render index view
-    return $this->renderer->render($response, 'index.phtml', $args);
+$app->get('/', function ($request, $response, $args) {
+	$stmt = $this->db->query("SELECT * FROM persons ORDER BY last_name");
+	$persons = $stmt->fetchAll();
+    return $this->renderer->render($response, 'index.latte', [
+		'persons' => $persons
+	]);
 });
