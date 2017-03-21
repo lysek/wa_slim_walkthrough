@@ -123,7 +123,7 @@ službu. Adaptér můžeme umístit do složky `/classes`, kterou vytvoříme.
 Tento adaptér potom zaregistrujeme opět do *dependency containeru* aplikace v `/src/dependencies.php`, všimněte si, že
 jsme ze souboru `/src/settings.php` převzali nakonfigurovanou cestku k šablonám. Cestu k cache jsme nastavili natvrdo,
 ale může samozřejmě být také v settings - tuto složku je nutné vytvořit, přidat do `/.gitignore` a nastavit do ní právo
-zápisu všem uživatelům.
+zápisu všem uživatelům. Samozřejmě je nutné původní `$container['renderer']` s PHP šablonami smazat.
 
 	$container['renderer'] = function($c) {
 		$settings = $c->get('settings')['renderer'];
