@@ -325,6 +325,58 @@ přidat třídu `form-control` na vstupní pole formulářů a zabalit celou str
 
 [Zdrojové kódy](https://github.com/lysek/wa_slim_walkthrough/commit/86d6be9d344e2d7338f3ed1d0bfc71cbf140fbfa)
 
+### Přihlašování uživatel
+Přihlašování vyžaduje obvykle vytvoření tabulky s uživateli v databázi, zde si ukážeme jen základní přihlášení a ověření
+pomocí middleware a uživatelský účet uložíme staticky do `src/settings.php` (login i heslo je "admin"):
+
+	'auth' => [
+		'user' => 'admin',
+		'pass' => 'd033e22ae348aeb5660fc2140aec35850c4da997'
+	],
+
+Obvykle se očekává, že v aplikaci bude několik rout, které budou přístupné pouze pro přihlášené, je proto dobré tyto
+routy [seskupit](https://www.slimframework.com/docs/objects/router.html#route-groups) a navázat na ně middleware, který
+bude ověřovat přihlášení v session (tedy bude aktivován jen pro tuto skupinu). První parametr metody `group()` je
+URL prefix pro všechny routy uvnitř, v callbacku potom definujeme jednotlivé routy na `$this` (místo `$app`):
+
+	$app->group('/user', function () {
+
+		$this->get('/profil', function(ServerRequestInterface $request, ResponseInterface $response) {});
+
+		$this->get('/odhlasit', function(ServerRequestInterface $request, ResponseInterface $response) {});
+
+	})->add(function(ServerRequestInterface $request, ResponseInterface $response, callable $next) {
+		if(!empty($_SESSION['logged_in'])) {
+			$this->renderer->addParams(['logged_in' => true]);
+			return $next($request, $response);
+		} else {
+			return $response->withStatus(401)->withHeader('Location', '../vypis');
+		}
+	});
+
+Pomocí metody `addParams` na třídě `LatteView` můžeme do šablony poslat informaci o tom, že je uživatel přihlášen a tím
+např. zařídit skrytí přihlašovacího tlačítka v menu.
+
+Samotné přihlášení je obyčejný POST požadavek, který musí být veřejný a jen ověří uživatele podle loginu a hesla.
+Tomuto ještě předchází vykreslení přihlašovacího formuláře. Úspěšné přihlášení je zaznamenáno do session:
+
+	$app->get('/prihlasit', function(ServerRequestInterface $request, ResponseInterface $response) {
+		return $this->renderer->render($response, 'login.latte');
+	});
+
+	$app->post('/prihlasit', function(ServerRequestInterface $request, ResponseInterface $response) {
+		$data = $request->getParsedBody();
+		if($data['login'] == $this->settings['auth']['user'] && sha1($data['pass']) == $this->settings['auth']['pass']) {
+			$_SESSION['logged_in'] = true;
+			return $response->withHeader('Location', 'user/profil');
+		}
+		return $response->withHeader('Location', 'prihlasit');
+	});
+
+Na routy chráněné pomocí middleware se dá dostat jen po přihlášení, jinak je uživatel přesměrován jinam.
+
+[Zdrojové kódy](https://github.com/lysek/wa_slim_walkthrough/commit/175bfd1be6b65e565f3ac55c3fc80a19b8a6a144)
+
 ## Poznámky
 Je vidět, že aplikace se poměrně rychle rozrůstá, proto by nebylo špatné, rozdělit routy do více souborů.
 
