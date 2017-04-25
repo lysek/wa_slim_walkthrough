@@ -28,6 +28,9 @@
 				<ul class="nav navbar-nav">
 					<li><a href="vypis">Vypis osob</a></li>
 					<li><a href="pridat">Pridat osobu</a></li>
+					{if !isset($logged_in)}
+					<li><a href="prihlasit">Prihlaseni</a></li>
+					{/if}
 				</ul>
 			</div>
 		</div>

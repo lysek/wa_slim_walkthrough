@@ -20,6 +20,11 @@ return [
             'level' => \Monolog\Logger::DEBUG,
         ],
 
+		'auth' => [
+			'user' => 'admin',
+			'pass' => 'd033e22ae348aeb5660fc2140aec35850c4da997'	//admin
+		],
+
 		'database' => [
 			'host' => getenv('DB_HOST'),
 			'user' => getenv('DB_USER'),

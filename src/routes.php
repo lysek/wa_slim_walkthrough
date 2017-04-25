@@ -130,3 +130,36 @@ $app->post('/aktualizace/{id}', function(ServerRequestInterface $request, Respon
 		'locations' => loadLocations($this->db)
 	]);
 });
+
+$app->get('/prihlasit', function(ServerRequestInterface $request, ResponseInterface $response) {
+	return $this->renderer->render($response, 'login.latte');
+});
+
+$app->post('/prihlasit', function(ServerRequestInterface $request, ResponseInterface $response) {
+	$data = $request->getParsedBody();
+	if($data['login'] == $this->settings['auth']['user'] && sha1($data['pass']) == $this->settings['auth']['pass']) {
+		$_SESSION['logged_in'] = true;
+		return $response->withHeader('Location', 'user/profil');
+	}
+	return $response->withHeader('Location', 'prihlasit');
+});
+
+$app->group('/user', function () {
+
+	$this->get('/profil', function(ServerRequestInterface $request, ResponseInterface $response) {
+		return $this->renderer->render($response, 'profil.latte');
+	});
+
+	$this->get('/odhlasit', function(ServerRequestInterface $request, ResponseInterface $response) {
+		$_SESSION['logged_in'] = false;
+		return $response->withHeader('Location', '../vypis');
+	});
+
+})->add(function(ServerRequestInterface $request, ResponseInterface $response, callable $next) {
+	if(!empty($_SESSION['logged_in'])) {
+		$this->renderer->addParams(['logged_in' => true]);
+		return $next($request, $response);
+	} else {
+		return $response->withStatus(401)->withHeader('Location', '../vypis');
+	}
+});
