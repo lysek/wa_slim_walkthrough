@@ -171,7 +171,9 @@ pomáhat, je dobré přidat k argumentům funkce i typ, který mají mít: `Psr\
 
 	use Psr\Http\Message\ServerRequestInterface;
 	use Psr\Http\Message\ResponseInterface;
-	$app->get('/', function (ServerRequestInterface $request, ResponseInterface $response, $args) {...});
+	$app->get('/', function (ServerRequestInterface $request, ResponseInterface $response, $args) {
+		...
+	});
 
 [Zdrojové kódy](https://github.com/lysek/wa_slim_walkthrough/commit/1811121632546d322fb81068f04ac096c7f6131f)
 
@@ -273,6 +275,9 @@ HTTP POST požadavku a můžeme i přidat vysvětlující hlášku:
 
 [Zdrojové kódy](https://github.com/lysek/wa_slim_walkthrough/commit/f86f9bd7bf4bd4da7fbb2a01d835417d19b43d01)
 
+Alternativně je možné proměnnou `$data` uložit do `$_SESSION` a přesměrovat na routu `/pridat`, kde zařídíme
+volitelné předání dat ze `$_SESSION` do dat formuláře.
+
 ### Smazání osoby
 Mazání osob provedeme přidáním formuláře s potvrzením na výpisu osob:
 
@@ -310,7 +315,7 @@ Vhodné místo k detekci aktuální cesty k aplikaci je [*middleware*](https://w
 který se spouští vždy před/po vlastní obsluze routy. Je také nutné přidat do našeho adaptéru pro Latte možnost vložit
 proměnnou do každé renderované šablony. *Middleware* je i vhodné místo pro ověření, zda je uživatel přihlášen nebo ne.
 
-	$app->add(function (Request $request, Response $response, callable $next) use($settings) {
+	$app->add(function (Request $request, Response $response, callable $next) {
 		$currentPath = dirname($_SERVER['PHP_SELF']);
 		$this->view->addParams([
 			'base_path' => $currentPath == '/' ? $currentPath : $currentPath . '/'
@@ -384,9 +389,8 @@ Je vidět, že aplikace se poměrně rychle rozrůstá, proto by nebylo špatné
 ### Rozjetí projektu na jiném stroji (po stažení z Gitu)
 Příkazem `git clone http://adresa.repositare.cz/nazev.git slozka` se vám stáhne z Gitu kopie projektu. Jelikož jsou
 některé důležité soubory a složky nastavené v souboru `.gitignore`, je potřeba primárně spustit příkaz
-`composer install`, aby se stáhl vlastní framework a jeho knihovny.
+`composer install`, aby se stáhl vlastní framework a jeho knihovny. Poté nastavit konfigurace v `/.env`, který
+vytvoříte jako kopii souboru `.env.example`.
 
 # TODO
-- nazvy rout
-
-`composer create-project slim/slim-skeleton .`
+- nazvy rout a neco jako {link ...} do Latte
