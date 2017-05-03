@@ -51,7 +51,8 @@ pomocí [PDO](http://php.net/manual/en/book.pdo.php) knihovny z PHP.
 Nejprve je nutné nastavit připojení k databázi v souboru `/src/settings.php` nebo lépe v souboru `/.env` (abychom měli
 oddělenou konfiguraci pro různá prostředí):
 
-Soubor `/src/settings.php` načítá nastavení z `/.env`:
+Soubor `/src/settings.php` načítá nastavení z `/.env`. Pokud nechcete `/.env` používat, vyplňte hodnoty přímo
+a pokračujte k vytvoření instance PDO.
 
 	...
 	'database' => [
@@ -62,7 +63,7 @@ Soubor `/src/settings.php` načítá nastavení z `/.env`:
 	]
 	...
 
-Soubor `/.env` obsahuje lokální nastavení a je ignorován:
+Soubor `/.env` obsahuje lokální nastavení a je v Gitu ignorován (tzn. je zahrnut v souboru `/.gitignore`):
 
 	DB_HOST=localhost
 	DB_USER=user
@@ -70,7 +71,7 @@ Soubor `/.env` obsahuje lokální nastavení a je ignorován:
 	DB_NAME=wa_slim
 
 Aby nám soubor `/.env` fungoval a nastavení z něj se načetly, musíme stáhnout rozšíření pro načítání jeho obsahu:
-`composer require vlucas/phpdotenv`. Potom je nutné načíst tyty proměnné, toto můžeme provést hned na začátku
+`composer require vlucas/phpdotenv`. Potom je nutné načíst tyto proměnné, toto můžeme provést hned na začátku
 sobuoru `/src/settings.php`:
 
 	$dotenv = new Dotenv\Dotenv(__DIR__);
@@ -121,9 +122,10 @@ službu. Adaptér můžeme umístit do složky `/classes`, kterou vytvoříme.
 	}
 
 Tento adaptér potom zaregistrujeme opět do *dependency containeru* aplikace v `/src/dependencies.php`, všimněte si, že
-jsme ze souboru `/src/settings.php` převzali nakonfigurovanou cestku k šablonám. Cestu k cache jsme nastavili natvrdo,
+jsme ze souboru `/src/settings.php` převzali nakonfigurovanou cestku k šablonám. Cestu k cache jsme nastavili "natvrdo",
 ale může samozřejmě být také v settings - tuto složku je nutné vytvořit, přidat do `/.gitignore` a nastavit do ní právo
-zápisu všem uživatelům. Samozřejmě je nutné původní `$container['renderer']` s PHP šablonami smazat.
+zápisu všem uživatelům (např. příkazem `chmod 0777 cache` nebo přes WinSCP/FileZillu). Cache pro šablony je volitelná.
+Samozřejmě je nutné původní `$container['renderer']` s PHP šablonami smazat.
 
 	$container['renderer'] = function($c) {
 		$settings = $c->get('settings')['renderer'];
@@ -133,8 +135,8 @@ zápisu všem uživatelům. Samozřejmě je nutné původní `$container['render
 		return $latteView;
 	};
 
-Abychom nemuseli soubory ze složky classes includovat ručně, je možné využít konfiguraci `composeru` a nastavit
-nahrávání souborů ze složky `/classes` ve stylu [PSR-0](http://www.php-fig.org/psr/psr-0/):
+Abychom nemuseli soubory ze složky `/classes` includovat ručně, je možné využít konfiguraci `composeru` v souboru
+`/composer.json` a nastavit nahrávání souborů ze složky `/classes` ve stylu [PSR-0](http://www.php-fig.org/psr/psr-0/):
 
 	...
 	"autoload" : {
@@ -145,12 +147,11 @@ nahrávání souborů ze složky `/classes` ve stylu [PSR-0](http://www.php-fig.
 	...
 
 ### Výpis osob
-
 Nyní máme funkční šablony, vyzkoušíme tedy předání nějakých dat z DB přímo do šablony, v souboru `/src/routes.php`
-načteme osoby a pošleme je prostřednictvím adaptéru do Latte. Proměnná `$app` vzniká v souboru `/public/index.php` a je
+načteme osoby a pošleme je prostřednictvím adaptéru do Latte šablony. Proměnná `$app` vzniká v souboru `/public/index.php` a je
 to jakýsi kontejner celé aplikace. Aplikace je sestavena z obsluh různých HTTP metod a URL adres - jde tedy o
 [routing s parametry](https://www.slimframework.com/docs/objects/router.html). Je možné vytvořit i routu na libovolnou
-HTTP metodu pomocí `$app->any('/route', function(...) {...});
+HTTP metodu pomocí `$app->any('/route', function(...) {...});` když je jedno, kterou HTTP metodu prohlížeč použije.
 
 	$app->get('/', function ($request, $response, $args) {
 		$stmt = $this->db->query("SELECT * FROM persons ORDER BY last_name");
@@ -160,7 +161,7 @@ HTTP metodu pomocí `$app->any('/route', function(...) {...});
 		]);
 	});
 
-V šabloně je samozřejmě přístupná proměnná `$persons`, která je naplněna daty z DB (pokud žádná nemáte, zkuste vložit
+V šabloně je samozřejmě přístupná proměnná `$persons`, která je naplněna daty z DB (pokud žádná nemáte, zkuste ručně vložit
 nějaké řádky do tabulky `persons`. Komunikace s databází by samozřejmě měla být v `try {} catch() {}` bloku.
 
 Všimněte si, že každá obsluha routy získává objekt popisující [vstup](https://www.slimframework.com/docs/objects/request.html)
