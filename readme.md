@@ -4,15 +4,15 @@ Tento projekt vznikl pro předmět WA na PEF MENDELU. Tento průvodce ukáže z�
 vytvoření aplikace, která zhruba odpovídá části zadání z předmětu APV (tedy evidence osob a jejich adres).
 
 Proti plnotučným frameworkům se Slim na první pohled jeví jako nedotažený projekt, ale to je záměr. Tento framework
-řeší v podstatě jen tzv. routing, předání dat do skriptu a řádnou odpověď. Jeho hlavní výhoda je snadné použití
-a možnost namíchat si vlastní oblíbené knihovny. Nejlépe jej použijete jako backend pro REST rozhraní, kde ani není
-potřeba řešit šablony a generování formulářů.
+řeší v podstatě jen tzv. routing, předání dat ze vstupu do skriptu a řádnou HTTP odpověď. Jeho hlavní výhoda je snadné
+použití a možnost namíchat si vlastní oblíbené knihovny. Nejlépe jej použijete jako backend pro REST rozhraní, kde ani
+není potřeba řešit šablony a generování formulářů.
 
 ## Úvod
 
 ### Platné pro:
 - Slim 3.7.x - [dokumentace](https://www.slimframework.com/docs/)
-- Apache 2.x a PHP 7.0
+- Apache 2.x a PHP 7.x
 - NetBeans (volitelné)
 
 ### Co je nutné udělat před vlastní prací
@@ -382,6 +382,61 @@ Tomuto ještě předchází vykreslení přihlašovacího formuláře. Úspěšn
 Na routy chráněné pomocí middleware se dá dostat jen po přihlášení, jinak je uživatel přesměrován jinam.
 
 [Zdrojové kódy](https://github.com/lysek/wa_slim_walkthrough/commit/175bfd1be6b65e565f3ac55c3fc80a19b8a6a144)
+
+## Rozšíření o REST cesty
+REST rozhraní je to, pro co byl framework Slim primárně navržen. Zkusíme vytvořit pomocí jQuery jednoduchý skript,
+který bude AJAXem tahat data z backendu. Konkrétně půjde o načtení detailu osoby do popup okna. Knihovna jQuery už
+je v projektu připojena kvůli Bootstrapu, není nutné ji tedy přidávat. Do výpisu osob přidáme prvek s atributem
+`data-person-info`, krom toho, že jej použijeme k předání ID osoby, bude sloužit i k vyvolání vlastního popupu.
+Jmenovaný atribut použijeme jako CSS selektor.
+
+	<span class="glyphicon glyphicon-info-sign" data-person-info="{$['id_person']}"></span>
+
+Ve složce `public` vytvoříme např. složku `js` a do ní vložíme soubor `person_detail.js`. Tento potom připojíme
+buď v hlavičce v souboru `templates/layout.latte` nebo někde v souboru s výpisem osob `templates/index.latte`:
+
+	<script type="text/javascript" src="js/person_detail.js"></script>
+
+Pro prvotní ověření jen obsloužíme událost click na element s data atributem v souboru `person_detail.js`:
+
+	$(document).ready(function() {
+		$('[data-person-info]').click(function() {
+			alert(this.dataset.personInfo);
+		});
+	});
+
+V backendu nachystáme API endpoint pro zjištění informací o osobě podle ID. Routa vypadá podobně jako ostatní, ale
+odpověď není generována přes Latte adaptér, ale pomocí metody `withJSON`, která vezme asociativní pole a převede jej
+na JSON strukturu.
+
+	$app->get('/api/osoba/{id}', function (ServerRequestInterface $request, ResponseInterface $response, $args) {
+		try {
+			$stmt = $this->db->prepare('SELECT * FROM persons WHERE id = :id');
+			$stmt->bindValue(':id', $args['id']);
+			$stmt->execute();
+			$person = $stmt->fetch(PDO::FETCH_ASSOC);
+			if($person) {
+				return $response->withJSON($person);
+			} else {
+				return $response->withJSON(['message' => 'Person not found.'], 404);
+			}
+		} catch (PDOException $e) {
+			return $response->withJSON(['message' => $e->getMessage()], 500);
+		}
+	});
+
+Na frontendu z této URL stáhneme data pomocí funkce [`getAJAX()`](http://api.jquery.com/jQuery.getJSON/) z jQuery.
+
+	$('[data-person-info]').click(function() {
+		$.getJSON('api/osoba/' + this.dataset.personInfo, function(response) {
+			console.log(response);
+			alert(response.first_name + ' ' + response.last_name + '\r\n' + response.nickname);
+		});
+	});
+
+Sledujte v konzoli a síťové konzoli vývojářských nástrojů, co se děje.
+
+[Zdrojové kódy](https://github.com/lysek/wa_slim_walkthrough/commit/e804241c5ed3e0aaab83e4beaa195cc0fc82c07c)
 
 ## Poznámky
 Je vidět, že aplikace se poměrně rychle rozrůstá, proto by nebylo špatné, rozdělit routy do více souborů.
