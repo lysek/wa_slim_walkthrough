@@ -16,8 +16,6 @@ CREATE TABLE `locations` (
   `name` varchar(200) COLLATE utf8_unicode_ci DEFAULT NULL,
   `latitude` double(8,2) DEFAULT NULL,
   `longitude` double(8,2) DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
@@ -31,8 +29,6 @@ CREATE TABLE `persons` (
   `id_location` int(10) unsigned DEFAULT NULL,
   `birth_day` date DEFAULT NULL,
   `height` int(10) unsigned DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `persons_nickname_first_name_last_name_unique` (`nickname`,`first_name`,`last_name`),
   KEY `persons_id_location_foreign` (`id_location`),
