@@ -16,7 +16,7 @@ Vypis osob
 {foreach $persons as $p}
 	<tr>
 		<td>
-			{$p['first_name']} {$p['last_name']}
+			<span class="glyphicon glyphicon-info-sign" data-person-info="{$p['id']}"></span> {$p['first_name']} {$p['last_name']}
 		</td>
 		<td>
 			{if $p['id_location']}
@@ -34,6 +34,7 @@ Vypis osob
 	</tr>
 {/foreach}
 </table>
+<script type="text/javascript" src="js/person_detail.js"></script>
 {else}
 	<p>Nejsou zde zadne osoby.</p>
 {/if}

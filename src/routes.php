@@ -29,6 +29,28 @@ $app->get('/[vypis]', function (ServerRequestInterface $request, ResponseInterfa
 	}
 });
 
+$app->get('/api/osoba/{id}', function (ServerRequestInterface $request, ResponseInterface $response, $args) {
+	try {
+		$stmt = $this->db->prepare(	'SELECT *
+									FROM persons
+									WHERE id = :id');
+		$stmt->bindValue(':id', $args['id']);
+		$stmt->execute();
+		$person = $stmt->fetch(PDO::FETCH_ASSOC);
+		if($person) {
+			return $response->withJSON($person);
+		} else {
+			return $response->withJSON([
+				'message' => 'Person not found.'
+			], 404);
+		}
+	} catch (PDOException $e) {
+		return $response->withJSON([
+			'message' => $e->getMessage()
+		], 500);
+	}
+});
+
 $app->get('/pridat', function(ServerRequestInterface $request, ResponseInterface $response, $args) {
 	return $this->renderer->render($response, 'create.latte', [
 		'form' => [
