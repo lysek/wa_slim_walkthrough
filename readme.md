@@ -92,6 +92,10 @@ aplikace v `/src/dependencies.php`. Tyto závislosti lze potom snadno získat v 
 Databázi můžete naimportovat ze souboru [`/db_struktura.sql`](https://github.com/lysek/wa_slim_walkthrough/blob/master/db_struktura.sql).
 
 ### Šablony
+
+**UPDATE 2018** Pro knihovnu Latte jsme pro vás vytvořili už nachystaný adaptér na adrese [https://github.com/ujpef/latte-view](https://github.com/ujpef/latte-view).
+Postupujte podle návodu v dokumentaci.
+
 Slim opět nemá žádný šablonovací systém, ve výchozím stavu podporuje šablony v čistém PHP, což je nevyhovující i pro
 malé projekty. Je tedy nutné stáhnout pomocí Composeru např. knihovnu Latte: `composer require latte/latte`.
 
