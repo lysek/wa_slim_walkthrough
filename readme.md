@@ -8,6 +8,12 @@ Proti plnotučným frameworkům se Slim na první pohled jeví jako nedotažený
 použití a možnost namíchat si vlastní oblíbené knihovny. Nejlépe jej použijete jako backend pro REST rozhraní, kde ani
 není potřeba řešit šablony a generování formulářů.
 
+# UPDATE 2018
+Tento návod je už nepřesný a slévají se zde různé přístupy. Nejlepší bude použít nový návod popsaný v knize
+[The Making of Web Application](https://akela.mendelu.cz/~lysek/tmwa/walkthrough-slim/). Tento návod může dobře
+posloužit jako dokumentace myšlenkového pochodu, který vedl ke kostře aplikace použité v uvedené knize, kterou najdete
+na [BitBucketu](https://bitbucket.org/apvmendelu/slim-based-project/src/master/).
+
 ## Úvod
 
 ### Platné pro:
