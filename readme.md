@@ -54,14 +54,16 @@ oddělenou konfiguraci pro různá prostředí):
 Soubor `/src/settings.php` načítá nastavení z `/.env`. Pokud nechcete `/.env` používat, vyplňte hodnoty přímo
 a pokračujte k vytvoření instance PDO.
 
-	...
-	'database' => [
-		'host' => getenv('DB_HOST'),
-		'user' => getenv('DB_USER'),
-		'pass' => getenv('DB_PASS'),
-		'name' => getenv('DB_NAME'),
-	]
-	...
+```php
+...
+'database' => [
+	'host' => getenv('DB_HOST'),
+	'user' => getenv('DB_USER'),
+	'pass' => getenv('DB_PASS'),
+	'name' => getenv('DB_NAME'),
+]
+...
+```
 
 Soubor `/.env` obsahuje lokální nastavení a je v Gitu ignorován (tzn. je zahrnut v souboru `/.gitignore`):
 
@@ -74,27 +76,32 @@ Aby nám soubor `/.env` fungoval a nastavení z něj se načetly, musíme stáhn
 `composer require vlucas/phpdotenv`. Potom je nutné načíst tyto proměnné, toto můžeme provést hned na začátku
 sobuoru `/src/settings.php`:
 
-	$dotenv = new Dotenv\Dotenv(__DIR__);
-	$dotenv->load();
+```php
+$dotenv = new Dotenv\Dotenv(__DIR__);
+$dotenv->load();
+```
 
 Nakonec zaregistrujeme PDO do [*dependency containeru*](https://www.slimframework.com/docs/concepts/di.html) naší
 aplikace v `/src/dependencies.php`. Tyto závislosti lze potom snadno získat v obsluhách rout.
 
-	$container['db'] = function ($c) {
-		$settings = $c->get('settings')['database'];
-		$pdo = new PDO("mysql:host=" . $settings['host'] . ";dbname=" . $settings['name'], $settings['user'], $settings['pass']);
-		$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-		$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-		$pdo->query("SET NAMES 'utf8'");
-		return $pdo;
-	};
+```php
+$container['db'] = function ($c) {
+	$settings = $c->get('settings')['database'];
+	$pdo = new PDO("mysql:host=" . $settings['host'] . ";dbname=" . $settings['name'], $settings['user'], $settings['pass']);
+	$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+	$pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+	$pdo->query("SET NAMES 'utf8'");
+	return $pdo;
+};
+```
 
 Databázi můžete naimportovat ze souboru [`/db_struktura.sql`](https://github.com/lysek/wa_slim_walkthrough/blob/master/db_struktura.sql).
 
 ### Šablony
 
 **UPDATE 2018** Pro knihovnu Latte jsme pro vás vytvořili už nachystaný adaptér na adrese [https://github.com/ujpef/latte-view](https://github.com/ujpef/latte-view).
-Postupujte podle návodu v dokumentaci.
+Postupujte podle návodu v dokumentaci této knihovny a tuto sekci přeskočte, popisuje vytvoření něčeho velmi podobného,
+nicméně popisuje i autloading přes Composer, který je potřeba např. pro modelovou vrstvu.
 
 Slim opět nemá žádný šablonovací systém, ve výchozím stavu podporuje šablony v čistém PHP, což je nevyhovující i pro
 malé projekty. Je tedy nutné stáhnout pomocí Composeru např. knihovnu Latte: `composer require latte/latte`.
@@ -102,28 +109,30 @@ malé projekty. Je tedy nutné stáhnout pomocí Composeru např. knihovnu Latte
 Pro zobrazení šablon je nutné napsat malý adaptér a podobně jako v případě databáze je dobré zaregistrovat Latte jako
 službu. Adaptér můžeme umístit do složky `/classes`, kterou vytvoříme.
 
-	<?php
+```php
+<?php
 
-	use \Psr\Http\Message\ResponseInterface as Response;
+use \Psr\Http\Message\Response as Response;
 
-	class LatteView {
+class LatteView {
 
-		private $latte;
-		private $pathToTemplates;
+	private $latte;
+	private $pathToTemplates;
 
-		function __construct(Latte\Engine $latte, $pathToTemplates) {
-			$this->latte = $latte;
-			$this->pathToTemplates = $pathToTemplates;
-		}
-
-		function render(Response $response, $name, array $params = []) {
-			$name = $this->pathToTemplates . '/' . $name;
-			$output = $this->latte->renderToString($name, $params);
-			$response->getBody()->write($output);
-			return $response;
-		}
-
+	function __construct(Latte\Engine $latte, $pathToTemplates) {
+		$this->latte = $latte;
+		$this->pathToTemplates = $pathToTemplates;
 	}
+
+	function render(Response $response, $name, array $params = []) {
+		$name = $this->pathToTemplates . '/' . $name;
+		$output = $this->latte->renderToString($name, $params);
+		$response->getBody()->write($output);
+		return $response;
+	}
+
+}
+```
 
 Tento adaptér potom zaregistrujeme opět do *dependency containeru* aplikace v `/src/dependencies.php`, všimněte si, že
 jsme ze souboru `/src/settings.php` převzali nakonfigurovanou cestku k šablonám. Cestu k cache jsme nastavili "natvrdo",
@@ -131,24 +140,28 @@ ale může samozřejmě být také v settings - tuto složku je nutné vytvořit
 zápisu všem uživatelům (např. příkazem `chmod 0777 cache` nebo přes WinSCP/FileZillu). Cache pro šablony je volitelná.
 Samozřejmě je nutné původní `$container['renderer']` s PHP šablonami smazat.
 
-	$container['renderer'] = function($c) {
-		$settings = $c->get('settings')['renderer'];
-		$engine = new Latte\Engine();
-		$engine->setTempDirectory(__DIR__ . '/../cache');
-		$latteView = new LatteView($engine, $settings['template_path']);
-		return $latteView;
-	};
+```php
+$container['renderer'] = function($c) {
+	$settings = $c->get('settings')['renderer'];
+	$engine = new Latte\Engine();
+	$engine->setTempDirectory(__DIR__ . '/../cache');
+	$latteView = new LatteView($engine, $settings['template_path']);
+	return $latteView;
+};
+```
 
 Abychom nemuseli soubory ze složky `/classes` includovat ručně, je možné využít konfiguraci `composeru` v souboru
 `/composer.json` a nastavit nahrávání souborů ze složky `/classes` ve stylu [PSR-0](http://www.php-fig.org/psr/psr-0/):
 
-	...
-	"autoload" : {
-		"psr-0": {
-			"": "classes/"
-		}
-	},
-	...
+```json`
+...
+"autoload" : {
+	"psr-0": {
+		"": "classes/"
+	}
+},
+...
+```
 
 ### Výpis osob
 Nyní máme funkční šablony, vyzkoušíme tedy předání nějakých dat z DB přímo do šablony, v souboru `/src/routes.php`
@@ -157,66 +170,76 @@ to jakýsi kontejner celé aplikace. Aplikace je sestavena z obsluh různých HT
 [routing s parametry](https://www.slimframework.com/docs/objects/router.html). Je možné vytvořit i routu na libovolnou
 HTTP metodu pomocí `$app->any('/route', function(...) {...});` když je jedno, kterou HTTP metodu prohlížeč použije.
 
-	$app->get('/', function ($request, $response, $args) {
-		$stmt = $this->db->query("SELECT * FROM persons ORDER BY last_name");
-		$persons = $stmt->fetchAll();
-		return $this->renderer->render($response, 'index.latte', [
-			'persons' => $persons
-		]);
-	});
+```php
+$app->get('/', function ($request, $response, $args) {
+	$stmt = $this->db->query("SELECT * FROM persons ORDER BY last_name");
+	$persons = $stmt->fetchAll();
+	return $this->renderer->render($response, 'index.latte', [
+		'persons' => $persons
+	]);
+});
+```
 
 V šabloně je samozřejmě přístupná proměnná `$persons`, která je naplněna daty z DB (pokud žádná nemáte, zkuste ručně vložit
 nějaké řádky do tabulky `persons`. Komunikace s databází by samozřejmě měla být v `try {} catch() {}` bloku.
 
 Všimněte si, že každá obsluha routy získává objekt popisující [vstup](https://www.slimframework.com/docs/objects/request.html)
 a [výstup](https://www.slimframework.com/docs/objects/response.html) a argumenty (proměnné z URL). Aby nám mohlo IDE
-pomáhat, je dobré přidat k argumentům funkce i typ, který mají mít: `Psr\Http\Message\ServerRequestInterface` a
-`Psr\Http\Message\ResponseInterface`, nejlépe pomocí `use`:
+pomáhat, je dobré přidat k argumentům funkce i typ, který mají mít: `Psr\Http\Message\Request` a
+`Psr\Http\Message\Response`, nejlépe pomocí `use`:
 
-	use Psr\Http\Message\ServerRequestInterface;
-	use Psr\Http\Message\ResponseInterface;
-	$app->get('/', function (ServerRequestInterface $request, ResponseInterface $response, $args) {
-		...
-	});
+```php
+use Psr\Http\Message\Request;
+use Psr\Http\Message\Response;
+$app->get('/', function (Request $request, Response $response, $args) {
+	...
+});
+```
 
 [Zdrojové kódy](https://github.com/lysek/wa_slim_walkthrough/commit/1811121632546d322fb81068f04ac096c7f6131f)
 
 ### Přidání osoby
 Do rout pridame jednu GET a jednu POST akci. Pro vykreslení formuláře nic spciálního nepotřebujeme:
 
-	$app->get('/pridat', function(ServerRequestInterface $request, ResponseInterface $response, $args) {
-		return $this->renderer->render($response, 'create.latte');
-	});
+```php
+$app->get('/pridat', function(Request $request, Response $response, $args) {
+	return $this->renderer->render($response, 'create.latte');
+});
+```
 
 Formulář jako takový je vytvořen v HTML. Přidání osoby je klasciké vložení dat přes PDO, zajímavý je postup
 získání dat z těla POST požadavku - používá se metoda `$request->getParsedBody()`, která na základě nastavené
 HTTP hlavičky převede obsah na asociativní pole. Po vložení dat do databáze je dobré přesměrovat návštěvníka
 na výpis osob, což se provede přidáním hlavičky *Location* do HTTP odpovědi.
 
-	$app->post('/ulozit', function(ServerRequestInterface $request, ResponseInterface $response, $args) {
-		try {
-			$data = $request->getParsedBody();
-			$stmt = $this->db->prepare('INSERT INTO persons (first_name, last_name, nickname) VALUES (:fn, :ln, :nn)');
-			$stmt->bindValue(':fn', $data['first_name']);
-			$stmt->bindValue(':ln', $data['last_name']);
-			$stmt->bindValue(':nn', $data['nickname']);
-			$stmt->execute();
-			return $response->withHeader('Location', 'vypis');
-		} catch (PDOException $e) {
-			if($e->getCode() == 23000) {
-				return $this->renderer->render($response, 'create.latte', ["duplicate" => true]);
-			} else {
-				die($e->getMessage());
-			}
+```php
+$app->post('/ulozit', function(Request $request, Response $response, $args) {
+	try {
+		$data = $request->getParsedBody();
+		$stmt = $this->db->prepare('INSERT INTO persons (first_name, last_name, nickname) VALUES (:fn, :ln, :nn)');
+		$stmt->bindValue(':fn', $data['first_name']);
+		$stmt->bindValue(':ln', $data['last_name']);
+		$stmt->bindValue(':nn', $data['nickname']);
+		$stmt->execute();
+		return $response->withHeader('Location', 'vypis');
+	} catch (PDOException $e) {
+		if($e->getCode() == 23000) {
+			return $this->renderer->render($response, 'create.latte', ["duplicate" => true]);
+		} else {
+			die($e->getMessage());
 		}
-	});
+	}
+});
+```
 
 Náš formuář zatím neřeší, zda byla vyplněny všechny povinné údaje (spoléhá na atribut `required`), ani neřeší předání
 vyplněných dat do šablony v případě chyby. Nicméně je ošetřen chybový stav při vložení duplicitních dat a to
 znovuzobrazením prízdného formuláře. URL `vypis` je nastavena jako volitelný text (v hranatých závorkách) ve
 výchozí routě pro výpis osob:
 
-	$app->get('/[vypis]', function (...) {...});
+```php
+$app->get('/[vypis]', function (...) {...});
+```
 
 [Zdrojové kódy](https://github.com/lysek/wa_slim_walkthrough/commit/3a12105040202578b3f012afba16da3a59c3e2d3)
 
@@ -225,57 +248,63 @@ Do formuláře pro vytvoření osoby je nutné přidat roletku s adresami, rozš
 výběr dat adres z DB. Tento výběr raději realizujeme jako funkci, protože ji budeme potřebovat i v případě
 znovuzobrazení formuláře při pokusu o vložení duplicitního záznamu.
 
-	function loadLocations(PDO $db) {
-		try {
-			$stmt = $db->query('SELECT * FROM locations ORDER BY city');
-			return $stmt->fetchAll();
-		} catch(PDOException $e) {
-			die($e->getMessage());
-		}
+```php
+function loadLocations(PDO $db) {
+	try {
+		$stmt = $db->query('SELECT * FROM locations ORDER BY city');
+		return $stmt->fetchAll();
+	} catch(PDOException $e) {
+		die($e->getMessage());
 	}
+}
 
-	$app->get('/pridat', function(ServerRequestInterface $request, ResponseInterface $response, $args) {
-		return $this->renderer->render($response, 'create.latte', [
-			'locations' => loadLocations($this->db)
-		]);
-	});
+$app->get('/pridat', function(Request $request, Response $response, $args) {
+	return $this->renderer->render($response, 'create.latte', [
+		'locations' => loadLocations($this->db)
+	]);
+});
+```
 
 [Zdrojové kódy](https://github.com/lysek/wa_slim_walkthrough/commit/274dfa47d5eaf93382501ae14a4e3ae3058e69cb)
 
 ### Zobrazení dat zadaných uživatelem při chybném odeslání formuláře
 Data do formuláře si můžeme předat pomocí vnořeného asoc. pole:
 
-	$app->get('/pridat', function(ServerRequestInterface $request, ResponseInterface $response, $args) {
-		return $this->renderer->render($response, 'create.latte', [
-			'form' => [
-				'first_name' => '',
-				'last_name' => '',
-				'nickname' => '',
-				'id_location' => ''
-			],
-			'locations' => loadLocations($this->db)
-		]);
-	});
+```php
+$app->get('/pridat', function(Request $request, Response $response, $args) {
+	return $this->renderer->render($response, 'create.latte', [
+		'form' => [
+			'first_name' => '',
+			'last_name' => '',
+			'nickname' => '',
+			'id_location' => ''
+		],
+		'locations' => loadLocations($this->db)
+	]);
+});
+```
 
 V případě, že je formulář odeslán chybně/duplicitně vyplněn, můžeme tyto data snadno přepsat polem s hodnotami z těla
 HTTP POST požadavku a můžeme i přidat vysvětlující hlášku:
 
-	$app->post('/ulozit', function(ServerRequestInterface $request, ResponseInterface $response, $args) {
-		$data = $request->getParsedBody();
-		$hlaska = '';
-		if (!empty($data['first_name']) && !empty($data['last_name']) && !empty($data['nickname'])) {
-			...
-			$hlaska = 'Takovato osoba jiz existuje';
-			...
-		} else {
-			$hlaska = 'Nebyly vyplneny vsechny povinne informace';
-		}
-		return $this->renderer->render($response, 'create.latte', [
-			'hlaska' => $hlaska,
-			'form' => $data,
-			'locations' => loadLocations($this->db)
-		]);
-	});
+```php
+$app->post('/ulozit', function(Request $request, Response $response, $args) {
+	$data = $request->getParsedBody();
+	$hlaska = '';
+	if (!empty($data['first_name']) && !empty($data['last_name']) && !empty($data['nickname'])) {
+		...
+		$hlaska = 'Takovato osoba jiz existuje';
+		...
+	} else {
+		$hlaska = 'Nebyly vyplneny vsechny povinne informace';
+	}
+	return $this->renderer->render($response, 'create.latte', [
+		'hlaska' => $hlaska,
+		'form' => $data,
+		'locations' => loadLocations($this->db)
+	]);
+});
+```
 
 [Zdrojové kódy](https://github.com/lysek/wa_slim_walkthrough/commit/f86f9bd7bf4bd4da7fbb2a01d835417d19b43d01)
 
@@ -285,25 +314,29 @@ volitelné předání dat ze `$_SESSION` do dat formuláře.
 ### Smazání osoby
 Mazání osob provedeme přidáním formuláře s potvrzením na výpisu osob:
 
-	<form action="smazat/{$p['id']}" onsubmit="return confirm('Opravdu smazat osobu?')" method="post">
-		<input type="submit" value="Smazat" />
-	</form>
+```html
+<form action="smazat/{$p['id']}" onsubmit="return confirm('Opravdu smazat osobu?')" method="post">
+	<input type="submit" value="Smazat" />
+</form>
+```
 
 ID osoby pro smazání bude přímo v URL a bude podle toho vypadat i routa, po smazání přesměrujeme na výpis osob. Je dobré
 si všimnout jak je postavena URL pro přesměrování - jelikož se o přesměrování stará webový prohlížeč na základě HTTP
 hlavičky, a ten si myslí, že jsme ve složce `/smazat`, je nutné z této složky přejít o úroveň nahoru a zde otevřít
 routu `vypis`, proto `../vypis`.
 
-	$app->post('/smazat/{id}', function(ServerRequestInterface $request, ResponseInterface $response, $args) {
-		try {
-			$stmt = $this->db->prepare('DELETE FROM persons WHERE id = :id');
-			$stmt->bindValue(':id', $args['id']);
-			$stmt->execute();
-			return $response->withHeader('Location', '../vypis');
-		} catch (PDOException $e) {
-			die($e->getMessage());
-		}
-	});
+```php
+$app->post('/smazat/{id}', function(Request $request, Response $response, $args) {
+	try {
+		$stmt = $this->db->prepare('DELETE FROM persons WHERE id = :id');
+		$stmt->bindValue(':id', $args['id']);
+		$stmt->execute();
+		return $response->withHeader('Location', '../vypis');
+	} catch (PDOException $e) {
+		die($e->getMessage());
+	}
+});
+```
 
 [Zdrojové kódy](https://github.com/lysek/wa_slim_walkthrough/commit/974f532327911eafdcd541b0fa5c784db0558101)
 
@@ -319,13 +352,15 @@ Vhodné místo k detekci aktuální cesty k aplikaci je [*middleware*](https://w
 který se spouští vždy před/po vlastní obsluze routy. Je také nutné přidat do našeho adaptéru pro Latte možnost vložit
 proměnnou do každé renderované šablony. *Middleware* je i vhodné místo pro ověření, zda je uživatel přihlášen nebo ne.
 
-	$app->add(function (Request $request, Response $response, callable $next) {
-		$currentPath = dirname($_SERVER['PHP_SELF']);
-		$this->view->addParams([
-			'base_path' => $currentPath == '/' ? $currentPath : $currentPath . '/'
-		]);
-		return $next($request, $response);
-	});
+```php
+$app->add(function (Request $request, Response $response, callable $next) {
+	$currentPath = dirname($_SERVER['PHP_SELF']);
+	$this->view->addParams([
+		'base_path' => $currentPath == '/' ? $currentPath : $currentPath . '/'
+	]);
+	return $next($request, $response);
+});
+```
 
 [Zdrojové kódy](https://github.com/lysek/wa_slim_walkthrough/commit/974f532327911eafdcd541b0fa5c784db0558101)
 
@@ -339,30 +374,34 @@ přidat třídu `form-control` na vstupní pole formulářů a zabalit celou str
 Přihlašování vyžaduje obvykle vytvoření tabulky s uživateli v databázi, zde si ukážeme jen základní přihlášení a ověření
 pomocí middleware a uživatelský účet uložíme staticky do `src/settings.php` (login i heslo je "admin"):
 
-	'auth' => [
-		'user' => 'admin',
-		'pass' => 'd033e22ae348aeb5660fc2140aec35850c4da997'
-	],
+```php
+'auth' => [
+	'user' => 'admin',
+	'pass' => 'd033e22ae348aeb5660fc2140aec35850c4da997'
+],
+```
 
 Obvykle se očekává, že v aplikaci bude několik rout, které budou přístupné pouze pro přihlášené, je proto dobré tyto
 routy [seskupit](https://www.slimframework.com/docs/objects/router.html#route-groups) a navázat na ně middleware, který
 bude ověřovat přihlášení v session (tedy bude aktivován jen pro tuto skupinu). První parametr metody `group()` je
 URL prefix pro všechny routy uvnitř, v callbacku potom definujeme jednotlivé routy na `$this` (místo `$app`):
 
-	$app->group('/user', function () {
+```php
+$app->group('/user', function () {
 
-		$this->get('/profil', function(ServerRequestInterface $request, ResponseInterface $response) {});
+	$this->get('/profil', function(Request $request, Response $response) {});
 
-		$this->get('/odhlasit', function(ServerRequestInterface $request, ResponseInterface $response) {});
+	$this->get('/odhlasit', function(Request $request, Response $response) {});
 
-	})->add(function(ServerRequestInterface $request, ResponseInterface $response, callable $next) {
-		if(!empty($_SESSION['logged_in'])) {
-			$this->renderer->addParams(['logged_in' => true]);
-			return $next($request, $response);
-		} else {
-			return $response->withStatus(401)->withHeader('Location', '../vypis');
-		}
-	});
+})->add(function(Request $request, Response $response, callable $next) {
+	if(!empty($_SESSION['logged_in'])) {
+		$this->renderer->addParams(['logged_in' => true]);
+		return $next($request, $response);
+	} else {
+		return $response->withStatus(401)->withHeader('Location', '../vypis');
+	}
+});
+```
 
 Pomocí metody `addParams` na třídě `LatteView` můžeme do šablony poslat informaci o tom, že je uživatel přihlášen a tím
 např. zařídit skrytí přihlašovacího tlačítka v menu.
@@ -370,18 +409,20 @@ např. zařídit skrytí přihlašovacího tlačítka v menu.
 Samotné přihlášení je obyčejný POST požadavek, který musí být veřejný a jen ověří uživatele podle loginu a hesla.
 Tomuto ještě předchází vykreslení přihlašovacího formuláře. Úspěšné přihlášení je zaznamenáno do session:
 
-	$app->get('/prihlasit', function(ServerRequestInterface $request, ResponseInterface $response) {
-		return $this->renderer->render($response, 'login.latte');
-	});
+```php
+$app->get('/prihlasit', function(Request $request, Response $response) {
+	return $this->renderer->render($response, 'login.latte');
+});
 
-	$app->post('/prihlasit', function(ServerRequestInterface $request, ResponseInterface $response) {
-		$data = $request->getParsedBody();
-		if($data['login'] == $this->settings['auth']['user'] && sha1($data['pass']) == $this->settings['auth']['pass']) {
-			$_SESSION['logged_in'] = true;
-			return $response->withHeader('Location', 'user/profil');
-		}
-		return $response->withHeader('Location', 'prihlasit');
-	});
+$app->post('/prihlasit', function(Request $request, Response $response) {
+	$data = $request->getParsedBody();
+	if($data['login'] == $this->settings['auth']['user'] && sha1($data['pass']) == $this->settings['auth']['pass']) {
+		$_SESSION['logged_in'] = true;
+		return $response->withHeader('Location', 'user/profil');
+	}
+	return $response->withHeader('Location', 'prihlasit');
+});
+```
 
 Na routy chráněné pomocí middleware se dá dostat jen po přihlášení, jinak je uživatel přesměrován jinam.
 
@@ -394,62 +435,97 @@ je v projektu připojena kvůli Bootstrapu, není nutné ji tedy přidávat. Do 
 `data-person-info`, krom toho, že jej použijeme k předání ID osoby, bude sloužit i k vyvolání vlastního popupu.
 Jmenovaný atribut použijeme jako CSS selektor.
 
-	<span class="glyphicon glyphicon-info-sign" data-person-info="{$['id_person']}"></span>
+```html
+<span class="glyphicon glyphicon-info-sign" data-person-info="{$['id_person']}"></span>
+```
 
 Ve složce `public` vytvoříme např. složku `js` a do ní vložíme soubor `person_detail.js`. Tento potom připojíme
 buď v hlavičce v souboru `templates/layout.latte` nebo někde v souboru s výpisem osob `templates/index.latte`:
 
-	<script type="text/javascript" src="js/person_detail.js"></script>
+```html
+<script type="text/javascript" src="js/person_detail.js"></script>
+```
 
 Pro prvotní ověření jen obsloužíme událost click na element s data atributem v souboru `person_detail.js`:
 
-	$(document).ready(function() {
-		$('[data-person-info]').click(function() {
-			alert(this.dataset.personInfo);
-		});
+```javascript
+$(document).ready(function() {
+	$('[data-person-info]').click(function() {
+		alert(this.dataset.personInfo);
 	});
+});
+```
 
 V backendu nachystáme API endpoint pro zjištění informací o osobě podle ID. Routa vypadá podobně jako ostatní, ale
 odpověď není generována přes Latte adaptér, ale pomocí metody `withJSON`, která vezme asociativní pole a převede jej
 na JSON strukturu.
 
-	$app->get('/api/osoba/{id}', function (ServerRequestInterface $request, ResponseInterface $response, $args) {
-		try {
-			$stmt = $this->db->prepare('SELECT * FROM persons WHERE id = :id');
-			$stmt->bindValue(':id', $args['id']);
-			$stmt->execute();
-			$person = $stmt->fetch(PDO::FETCH_ASSOC);
-			if($person) {
-				return $response->withJSON($person);
-			} else {
-				return $response->withJSON(['message' => 'Person not found.'], 404);
-			}
-		} catch (PDOException $e) {
-			return $response->withJSON(['message' => $e->getMessage()], 500);
+```php
+$app->get('/api/osoba/{id}', function (Request $request, Response $response, $args) {
+	try {
+		$stmt = $this->db->prepare('SELECT * FROM persons WHERE id = :id');
+		$stmt->bindValue(':id', $args['id']);
+		$stmt->execute();
+		$person = $stmt->fetch(PDO::FETCH_ASSOC);
+		if($person) {
+			return $response->withJSON($person);
+		} else {
+			return $response->withJSON(['message' => 'Person not found.'], 404);
 		}
-	});
+	} catch (PDOException $e) {
+		return $response->withJSON(['message' => $e->getMessage()], 500);
+	}
+});
+```
 
 Na frontendu z této URL stáhneme data pomocí funkce [`getAJAX()`](http://api.jquery.com/jQuery.getJSON/) z jQuery.
 
-	$('[data-person-info]').click(function() {
-		$.getJSON('api/osoba/' + this.dataset.personInfo, function(response) {
-			console.log(response);
-			alert(response.first_name + ' ' + response.last_name + '\r\n' + response.nickname);
-		});
+```javascript
+$('[data-person-info]').click(function() {
+	$.getJSON('api/osoba/' + this.dataset.personInfo, function(response) {
+		console.log(response);
+		alert(response.first_name + ' ' + response.last_name + '\r\n' + response.nickname);
 	});
+});
+```
 
 Sledujte v konzoli a síťové konzoli vývojářských nástrojů, co se děje.
 
 [Zdrojové kódy](https://github.com/lysek/wa_slim_walkthrough/commit/e804241c5ed3e0aaab83e4beaa195cc0fc82c07c)
 
+## Názvy rout
+V dokumentaci wrapperu [Latte View](https://github.com/ujpef/latte-view) je popsáno, jak vytvořit makro pro šablony
+`{link routeName}`, které poslouží pro generování cest v HTML šablonách.
+
+```php
+$app->get('/neco', function(Request $request, Response $response, $args) {
+    //...        
+})->setName('routeName');
+```
+
+```html
+<a href="{link routeName}">Klikem se vyvolá routa /neco</a>
+```
+
+Makro generuje pouze URL (eventualně umí vložit parametry místo placeholderů), ale query parametry už přidáváte ručně. 
+
+```php
+$app->get('/neco', function(Request $request, Response $response, $args) {
+    $id = $request->getQueryParam('id');
+    //...        
+})->setName('routeName');
+```
+
+```html
+<a href="{link routeName}?id={$id}">Klikem se vyvolá routa /neco?id=123</a>
+```
+
 ## Poznámky
-Je vidět, že aplikace se poměrně rychle rozrůstá, proto by nebylo špatné, rozdělit routy do více souborů.
+Je vidět, že aplikace se poměrně rychle rozrůstá, proto by nebylo špatné, rozdělit routy do více souborů (pomocí funkce
+`include()` nebo `require()`).
 
 ### Rozjetí projektu na jiném stroji (po stažení z Gitu)
 Příkazem `git clone http://adresa.repositare.cz/nazev.git slozka` se vám stáhne z Gitu kopie projektu. Jelikož jsou
 některé důležité soubory a složky nastavené v souboru `.gitignore`, je potřeba primárně spustit příkaz
 `composer install`, aby se stáhl vlastní framework a jeho knihovny. Poté nastavit konfigurace v `/.env`, který
 vytvoříte jako kopii souboru `.env.example`.
-
-# TODO
-- nazvy rout a neco jako {link ...} do Latte
