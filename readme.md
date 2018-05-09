@@ -520,6 +520,30 @@ $app->get('/neco', function(Request $request, Response $response, $args) {
 <a href="{link routeName}?id={$id}">Klikem se vyvolá routa /neco?id=123</a>
 ```
 
+Místo proměnné base path lze použít `{link index}`.
+
+```php
+$app->get('/', function(Request $request, Response $response, $args) {
+    //...        
+})->setName('index');
+```
+
+```html
+<head>
+	<base href="{link index}">
+</head>
+```
+
+Případně lze base značku vypustit a generovat cesty ke statickým souborům přes toto makro.
+
+```html
+<head>
+	<script type="text/javascript" src="{link index}js/person_detail.js"></script>
+	<!-- nebo -->
+	<script type="text/javascript" src="{$base_path}js/person_detail.js"></script>
+</head>
+```
+
 ## Poznámky
 Je vidět, že aplikace se poměrně rychle rozrůstá, proto by nebylo špatné, rozdělit routy do více souborů (pomocí funkce
 `include()` nebo `require()`).
